@@ -35,3 +35,26 @@ All load testing ran against `127.0.0.1` only. No deployed site was ever a targe
 
 `docs/environment.md`, `docs/sut.md` and `docs/overnight_report.md` name the client.
 Redact those before this repo is ever made public.
+
+## Raw k6 output — not in this repo
+
+About 1.3 GB across 10 files, the largest 345 MB. GitHub rejects any file over
+100 MB, and putting this in git history would make the repo unclonable.
+
+Every published number derives from the reduced data that *is* here
+(`data/runs/*/summary.json`, `metrics.json`, `aggregate.json`). The raw files are the
+original per-request measurements and stay on the machine that produced them.
+
+| File | Size |
+|---|---|
+| `results/soak/raw.json.gz` | 345 MB |
+| `results/soak/requests.csv` | 252 MB |
+| `results/mixed/uniform_cheap_run2/requests.csv` | 137 MB |
+| `results/mixed/mix_0p1pct_run2/requests.csv` | 126 MB |
+| `results/mixed/mix_1pct_run2/requests.csv` | 109 MB |
+| + 5 more | ~310 MB |
+
+## Load generator
+
+k6 v2.2.0 (windows-amd64), downloaded from grafana/k6 releases. The binary is not
+committed — install it rather than cloning 94 MB of it.

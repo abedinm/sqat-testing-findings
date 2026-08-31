@@ -1,0 +1,2 @@
+Deltadesh site running at http://localhost:8099
+Admin token: local-admin (default — set ADMIN_TOKEN env for production)

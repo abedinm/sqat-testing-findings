@@ -1,0 +1,51 @@
+
+===== ARM C : VARIANCE INJECTION =====
+  uniform_cheap      run1 rps=21,671 mean=   0.316 p50=   0.000 p99=   1.506 p99/mean=  4.76
+  uniform_cheap      run2 rps=20,263 mean=   0.337 p50=   0.000 p99=   1.506 p99/mean=  4.47
+  uniform_cheap      run3 rps=18,854 mean=   0.371 p50=   0.000 p99=   1.506 p99/mean=  4.06
+  uniform_cheap      run4 rps=18,707 mean=   0.374 p50=   0.000 p99=   1.506 p99/mean=  4.03
+  uniform_expensive  run1 rps= 1,151 mean=   6.932 p50=   6.444 p99=  17.209 p99/mean=  2.48
+  uniform_expensive  run2 rps= 1,160 mean=   6.874 p50=   6.386 p99=  17.177 p99/mean=  2.50
+  uniform_expensive  run3 rps= 1,177 mean=   6.778 p50=   6.285 p99=  16.794 p99/mean=  2.48
+  uniform_expensive  run4 rps= 1,191 mean=   6.698 p50=   6.231 p99=  16.563 p99/mean=  2.47
+  mix_10pct          run1 rps= 7,292 mean=   1.049 p50=   0.604 p99=   5.290 p99/mean=  5.04
+  mix_10pct          run2 rps= 7,212 mean=   1.056 p50=   0.646 p99=   5.341 p99/mean=  5.06
+  mix_10pct          run3 rps= 7,371 mean=   1.039 p50=   0.603 p99=   5.217 p99/mean=  5.02
+  mix_10pct          run4 rps= 7,433 mean=   1.031 p50=   0.606 p99=   5.170 p99/mean=  5.01
+  mix_1pct           run1 rps=16,432 mean=   0.435 p50=   0.517 p99=   2.425 p99/mean=  5.58
+  mix_1pct           run2 rps=15,989 mean=   0.446 p50=   0.000 p99=   2.023 p99/mean=  4.54
+  mix_1pct           run3 rps=16,381 mean=   0.436 p50=   0.517 p99=   2.077 p99/mean=  4.76
+  mix_1pct           run4 rps=16,544 mean=   0.432 p50=   0.516 p99=   2.073 p99/mean=  4.80
+  mix_0p1pct         run1 rps=19,266 mean=   0.364 p50=   0.000 p99=   1.506 p99/mean=  4.13
+  mix_0p1pct         run2 rps=18,534 mean=   0.378 p50=   0.000 p99=   1.506 p99/mean=  3.98
+  mix_0p1pct         run3 rps=18,820 mean=   0.372 p50=   0.000 p99=   1.506 p99/mean=  4.05
+  mix_0p1pct         run4 rps=18,941 mean=   0.370 p50=   0.000 p99=   1.506 p99/mean=  4.07
+
+===== THICKENING THIN CELLS =====
+  -- /api/search, limiter disabled --
+    run4 rps=   440 mean=  18.159 p99=  27.786
+    run5 rps=   440 mean=  18.129 p99=  27.623
+    run6 rps=   441 mean=  18.113 p99=  27.452
+    run7 rps=   440 mean=  18.129 p99=  27.238
+  -- scaled arm extra repeats --
+MATRIX  tag=x1  levels=8  routes=/api/content  repeats=3  duration=120s
+  total runs: 3
+  [1/3] /api/content     vus=8   run=1 p50=   6.00 p95=   8.97 p99=  16.45 rps= 1,230 fail=0.00% eta 4.1m
+  [2/3] /api/content     vus=8   run=2 p50=   5.95 p95=   8.24 p99=  16.47 rps= 1,249 fail=0.00% eta 2.1m
+  [3/3] /api/content     vus=8   run=3 p50=   5.94 p95=   8.09 p99=  16.57 rps= 1,253 fail=0.00% eta 0m
+MATRIX x1 COMPLETE - index at results\scaled_extra\index.csv
+MATRIX  tag=x10  levels=8  routes=/api/content  repeats=3  duration=120s
+  total runs: 3
+  [1/3] /api/content     vus=8   run=1 p50=  52.48 p95=  65.14 p99=  72.55 rps=   148 fail=0.00% eta 4.1m
+  [2/3] /api/content     vus=8   run=2 p50=  52.35 p95=  66.05 p99=  73.91 rps=   148 fail=0.00% eta 2.1m
+  [3/3] /api/content     vus=8   run=3 p50=  52.19 p95=  65.56 p99=  72.78 rps=   149 fail=0.00% eta 0m
+MATRIX x10 COMPLETE - index at results\scaled_extra\index.csv
+MATRIX  tag=x100  levels=8  routes=/api/content  repeats=3  duration=120s
+  total runs: 3
+  [1/3] /api/content     vus=8   run=1 p50= 523.61 p95= 561.27 p99= 594.29 rps=    15 fail=0.00% eta 4.1m
+  [2/3] /api/content     vus=8   run=2 p50= 523.85 p95= 567.34 p99= 591.37 rps=    15 fail=0.00% eta 2.1m
+  [3/3] /api/content     vus=8   run=3 p50= 524.10 p95= 572.95 p99= 601.58 rps=    15 fail=0.00% eta 0m
+MATRIX x100 COMPLETE - index at results\scaled_extra\index.csv
+  baseline content.json restored
+
+===== PHASE 1 COMPLETE =====

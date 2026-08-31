@@ -5,3 +5,5 @@ sut/
 tools/
 __pycache__/
 *.pyc
+~$*
+*.tmp
