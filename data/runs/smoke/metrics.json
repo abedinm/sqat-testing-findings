@@ -1,0 +1,30 @@
+{
+  "requests": 30317,
+  "wall_span_s": 29.997,
+  "throughput_rps": 1010.67,
+  "error_rate_pct": 0.0,
+  "status_counts": {
+    "200": 30317
+  },
+  "mean_ms": 0.9587,
+  "median_ms": 1.0036,
+  "p50_ms": 1.0036,
+  "p90_ms": 1.3821,
+  "p95_ms": 1.5104,
+  "p99_ms": 1.8878,
+  "p99_9_ms": 2.3861,
+  "max_ms": 11.633,
+  "worst_1pct_mean_ms": 2.1368,
+  "worst_0p1pct_mean_ms": 2.8582,
+  "std_ms": 0.3285,
+  "cv": 0.3427,
+  "p99_over_mean": 1.9692,
+  "p99_over_p50": 1.881,
+  "spike_count": 256,
+  "spike_rate_per_min": 512.05,
+  "spike_factor_used": 2.0,
+  "p99_raw_ms": 1.8878,
+  "p99_quantized_ms": 1.0409,
+  "quantization_bias_ms": 0.8469,
+  "label": "smoke"
+}

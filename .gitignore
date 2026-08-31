@@ -1,0 +1,7 @@
+raw.json
+raw.json.gz
+requests.csv.gz
+sut/
+tools/
+__pycache__/
+*.pyc
