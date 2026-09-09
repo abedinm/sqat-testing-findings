@@ -1,4 +1,4 @@
-# What the Mean Conceals: A Controlled Study of Percentile Analysis in Web Application Performance Testing
+# What the Mean Conceals - A Controlled Study of Percentile Analysis in Web Application Performance Testing
 
 
 ---
@@ -47,9 +47,9 @@ omission, ISO/IEC 25010
 Performance reporting for web applications is dominated by the arithmetic mean.
 Dashboards display average response time and service reports quote it. ISO/IEC 25010 defines performance efficiency as the degree to which a product "performs
 its functions within specified time and throughput parameters and is efficient in the use
-of resources" under specified conditions, and places response time under its *time
-behaviour* sub-characteristic. Mean response time is the measure conventionally reported
-against it.
+of resources" under specified conditions, and places response time under its *time behaviour* sub-characteristic. The companion
+measurement standard ISO/IEC 25023 [1] defines mean response time as a quality measure
+against that sub-characteristic.
 
 Against this, a substantial practitioner literature argues that the mean is actively
 misleading. Google's *Site Reliability Engineering* states plainly that when latencies are
@@ -100,40 +100,43 @@ under which it holds are narrower and more interesting than usually stated.
 
 ## 2. Background and Related Work
 
-Tail latency. Dean and Barroso [1] describe how, in large-scale services composed of
+Tail latency. Dean and Barroso [2] describe how, in large-scale services composed of
 many components, rare slow responses come to dominate user-visible latency, and argue that
 techniques tolerating latency variability are essential to responsive systems. Their
 concern is variability, not mean slowness, a distinction this paper takes as its central
 axis.
 
-Percentiles as service level indicators. Google's SRE practice [2] recommends
+Percentiles as service level indicators. Google's SRE practice [3] recommends
 percentile-based indicators over averages, noting that "a high-order percentile, such as
 the 99th or 99.9th, shows you a plausible worst-case value, while using the 50th
 percentile (also known as the median) emphasizes the typical case." It further observes
 that "user studies have shown that people typically prefer a slightly slower system to one
 with high variance in response time", again locating the problem in variance.
 
-Coordinated omission. Tene's critique [3] identifies a systematic flaw in load
+Coordinated omission. Tene's critique [4] identifies a systematic flaw in load
 measurement: when a generator's request issuance is coupled to the system's responses, the
 requests that *would* have been issued during a slow period are never issued, so slow
 periods are under-sampled and percentiles are biased optimistically. Grafana's k6
-documentation [4] states the same in tool-specific terms: in the closed model "VU
+documentation [5] states the same in tool-specific terms: in the closed model "VU
 iterations start only when the last iteration finishes", and when the target system
 "starts to respond more slowly, a closed model load test will wait, resulting in increased
 iteration durations and a tapering off of the arrival rate of new VU iterations", a
-problem "known as *coordinated omission*". This study measures its magnitude in its own
-data rather than assuming it away (§5.8).
+problem "known as *coordinated omission*". Schroeder, Wierman and Harchol-Balter [6] establish the same point experimentally,
+showing that open and closed workload models produce substantially different behaviour in
+real systems and that the choice between them changes the conclusions a study reaches.
+This paper measures the magnitude of the bias in its own data rather than assuming it away
+(§5.8).
 
-Queueing. Little's Law [5] relates the mean number of items in a system, the arrival
+Queueing. Little's Law [7] relates the mean number of items in a system, the arrival
 rate and the mean time in system as L = λW. It is used here to distinguish genuine server
 saturation from a load-generator artefact (§4.4, §5.3).
 
-Standards context. ISO/IEC 25010 [6] defines performance efficiency as the degree to which a product
+Standards context. ISO/IEC 25010 [8] defines performance efficiency as the degree to which a product
 "performs its functions within specified time and throughput parameters and is efficient
 in the use of resources" under specified conditions. Its *time behaviour* sub-
 characteristic covers the response time and throughput rates of a system performing its
-functions. Where mean response time is the measure reported against that sub-
-characteristic, the question this paper asks is what the measure fails to express.
+functions. ISO/IEC 25023 [1] defines mean response time as a measure against that sub-
+characteristic. The question this paper asks is what that measure fails to express.
 
 Gap. The practitioner literature argues for percentiles largely from first principles and from
 observational data on production systems, where the cause of any degradation is not
@@ -221,10 +224,12 @@ percentile computed over per-second means, and the gap between the two is report
 sampling bias (§5.9).
 
 Effect size alongside significance. Where distributions are compared, the
-Mann-Whitney U test is used, as response-time distributions are not normal. Effect size
-(rank-biserial r) is reported alongside p, because at the sample sizes involved
-(millions of requests) statistical significance is uninformative, a point demonstrated
-concretely in §5.4.
+Mann-Whitney U test is used, as response-time distributions are not normal. Effect size (rank-biserial r) is reported alongside p, because at the sample sizes
+involved (millions of requests) statistical significance is uninformative, a point
+demonstrated concretely in §5.4. This follows the practice argued for by Georges et al.
+[9] for performance evaluation and by Hoefler and Belli [10] for benchmarking generally;
+both surveys find that systems papers routinely report results without the statistical
+basis needed to interpret them.
 
 ### 4.4 Distinguishing server saturation from generator contention
 
@@ -506,7 +511,7 @@ metrics report, not what the application does.
 ### 5.8 Arm E: coordinated-omission control
 
 All load arms above used a closed-model executor, in which a virtual user issues its next
-request only after the previous one returns. As Tene [3] and the k6 documentation [4]
+request only after the previous one returns. As Tene [4] and the k6 documentation [5]
 describe, this under-samples slow periods and biases percentiles optimistically. The study's argument rests on percentiles, so the size of that bias was measured rather
 than assumed, by repeating `/api/content` with an open-model executor at three offered
 rates.
@@ -635,7 +640,10 @@ supported.
 
 Background load and power configuration. The host ran a standard desktop software
 environment on a balanced power profile, adding variance not quantified here. Conditions
-were identical across arms.
+were identical across arms. Mytkowicz et al. [11] show that incidental features of an
+experimental setup can bias systems measurements enough to reverse a conclusion, so
+identical conditions across arms bound the risk of a differential effect without
+eliminating a common one.
 
 Construct validity of Arm C. Variance was induced by mixing two endpoints rather than
 by varying one endpoint's cost. This is realistic, since production variance usually
@@ -688,26 +696,50 @@ data reported here was generated by the experiments described in Section 4.
 
 ## References
 
-[1] J. Dean and L. A. Barroso, "The tail at scale," *Communications of the ACM*, vol. 56,
+[1] ISO/IEC 25023:2016, *Systems and software engineering, Systems and software Quality
+Requirements and Evaluation (SQuaRE), Measurement of system and software product quality*.
+International Organization for Standardization, 2016.
+
+[2] J. Dean and L. A. Barroso, "The tail at scale," *Communications of the ACM*, vol. 56,
 no. 2, pp. 74-80, Feb. 2013. doi: 10.1145/2408776.2408794.
 
-[2] B. Beyer, C. Jones, J. Petoff, and N. R. Murphy, Eds., *Site Reliability Engineering:
+[3] B. Beyer, C. Jones, J. Petoff, and N. R. Murphy, Eds., *Site Reliability Engineering:
 How Google Runs Production Systems*, ch. 4, "Service Level Objectives." O'Reilly, 2016.
 [Online]. Available: https://sre.google/sre-book/service-level-objectives/
 
-[3] G. Tene, "How NOT to measure latency," conference presentation. Cited here via the
-secondary account in T. Treat, "Everything you know about latency is wrong." [Online].
-Available: https://bravenewgeek.com/everything-you-know-about-latency-is-wrong/
+[4] G. Tene, "How NOT to measure latency," presented at QCon San Francisco, San Francisco,
+CA, Nov. 2015. [Online]. Available: https://www.infoq.com/presentations/latency-response-
+time/
 
-[4] Grafana Labs, "Open and closed models," *k6 documentation*. [Online]. Available:
+[5] Grafana Labs, "Open and closed models," *k6 documentation*. [Online]. Available:
 https://grafana.com/docs/k6/latest/using-k6/scenarios/concepts/open-vs-closed/
 
-[5] J. D. C. Little, "A proof for the queuing formula: L = λW," *Operations Research*,
+[6] B. Schroeder, A. Wierman, and M. Harchol-Balter, "Open versus closed: a cautionary
+tale," in *Proc. 3rd USENIX Symp. Networked Systems Design and Implementation (NSDI '06)*,
+San Jose, CA, May 2006. [Online]. Available:
+https://www.usenix.org/legacy/event/nsdi06/tech/full_papers/schroeder/schroeder.pdf
+
+[7] J. D. C. Little, "A proof for the queuing formula: L = λW," *Operations Research*,
 vol. 9, no. 3, pp. 383-387, 1961. doi: 10.1287/opre.9.3.383.
 
-[6] ISO/IEC 25010:2023, *Systems and software engineering, Systems and software Quality
+[8] ISO/IEC 25010:2023, *Systems and software engineering, Systems and software Quality
 Requirements and Evaluation (SQuaRE), Product quality model*. International Organization
 for Standardization, 2023.
+
+[9] A. Georges, D. Buytaert, and L. Eeckhout, "Statistically rigorous Java performance
+evaluation," in *Proc. 22nd ACM SIGPLAN Conf. Object-Oriented Programming Systems,
+Languages and Applications (OOPSLA '07)*, Montreal, QC, Oct. 2007, pp. 57-76. doi:
+10.1145/1297027.1297033.
+
+[10] T. Hoefler and R. Belli, "Scientific benchmarking of parallel computing systems:
+twelve ways to tell the masses when reporting performance results," in *Proc. Int. Conf.
+High Performance Computing, Networking, Storage and Analysis (SC '15)*, Austin, TX, Nov.
+2015, art. 73, pp. 1-12. doi: 10.1145/2807591.2807644.
+
+[11] T. Mytkowicz, A. Diwan, M. Hauswirth, and P. F. Sweeney, "Producing wrong data
+without doing anything obviously wrong!," in *Proc. 14th Int. Conf. Architectural Support
+for Programming Languages and Operating Systems (ASPLOS '09)*, Washington, DC, Mar. 2009,
+pp. 265-276. doi: 10.1145/1508284.1508275.
 
 ---
 

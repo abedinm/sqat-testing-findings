@@ -1,4 +1,4 @@
-# Session log — 2026-09-09
+# Session log — 2026-09-09/10
 
 Everything done in this session, and everything still open. Paste this into Claude on the
 Mac to pick up exactly where this left off.
@@ -167,3 +167,70 @@ The PDF must be named with the paper's title (requirement 6).
   Fine in a private repo. Redact before making anything public.
 - **Never hand-type a number into the paper.** Every value comes from `facts.json`.
 - The dates in `docs/testing-plan-notes.docx` are placeholders and are not accurate.
+
+---
+
+## Update, 2026-09-10 — five of six flagged gaps closed
+
+A review pass listed six things below the mark. Five are fixed.
+
+| # | Gap | Status |
+|---|---|---|
+| 1 | Prose is model-written (req 9) | **NOT FIXED.** Requires the author to write it. |
+| 2 | Not a real conference template | Fixed — rebuilt as two-column, 12 pages |
+| 3 | Only 6 references | Fixed — 11, all verified against publisher records |
+| 4 | Tene cited via a blog post | Fixed — cites the QCon SF 2015 talk directly |
+| 5 | 178 of 207 numbers not re-checked | Fixed — all 207 now verified traceable |
+| 6 | Filename colon vs title | Fixed — title uses a dash; filename now matches exactly |
+
+### References added (each checked against the publisher before citing)
+
+- Schroeder, Wierman & Harchol-Balter, "Open versus closed: a cautionary tale," NSDI '06 —
+  the primary experimental result on open vs closed load models; supports §5.8
+- Hoefler & Belli, SC '15, doi:10.1145/2807591.2807644 — benchmarking reporting practice
+- Georges, Buytaert & Eeckhout, OOPSLA '07, doi:10.1145/1297027.1297033 — statistically
+  rigorous performance evaluation; supports §4.3
+- Mytkowicz et al., ASPLOS '09, doi:10.1145/1508284.1508275 — measurement bias; supports §7
+- ISO/IEC 25023:2016 — defines mean response time (measure PTb-1-G) against the time
+  behaviour sub-characteristic; restores the claim removed when the 25010 error was fixed
+
+Citations renumbered in IEEE first-appearance order. All 11 cited, no orphans.
+
+### Also fixed
+
+- **ISO/IEC 25010 citation error.** The paper cited the 2023 standard but quoted the 2011
+  definition of performance efficiency, which the 2023 revision replaced. Both occurrences
+  corrected.
+- **Wrapped list items were being split.** Every bullet that wrapped across source lines
+  had its tail emitted as a separate body paragraph. Pre-existing bug, visible in §1.1.
+- **Table captions orphaned from their tables** — captions now carry keep_with_next.
+- **Tables split across the column break** — all tables now span both columns.
+
+### Verification now run
+
+```
+python scripts/verify_paper.py         # re-derives 29 headline claims from raw data
+python scripts/verify_all_numbers.py   # all 207 substituted values traceable
+```
+
+`verify_all_numbers.py` confirms every placeholder resolves, carries a provenance path to
+a file that still exists, and appears in the rendered paper. 197 collected from run
+outputs, 10 derived from those by build_paper.derive().
+
+One number has no surviving source file: the 116.8 MB raw k6 output for the smoke run.
+The file was deleted by design after extraction, but the measurement is recorded
+contemporaneously in docs/decision_log.md, docs/environment.md and docs/overnight_report.md
+with supporting detail (515,467 lines, 30,317 requests).
+
+### Quotes verified verbatim against source
+
+Google SRE ch.4 (4 quotes), Grafana k6 documentation (3 quotes). Bibliographic details for
+Dean & Barroso and Little confirmed against CACM and INFORMS respectively.
+
+### Current state
+
+12 pages, two-column, 11 references, 9 figures, 11 tables. 29/29 claim checks and 207/207
+number checks pass. Filename matches the title exactly.
+
+**Still open: requirement 9.** The prose is model-written. Skeletons for rewriting §3, §6,
+§8 and the abstract are in paper/skeletons/.
