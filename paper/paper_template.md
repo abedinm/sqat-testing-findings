@@ -45,10 +45,11 @@ omission, ISO/IEC 25010
 ## 1. Introduction
 
 Performance reporting for web applications is dominated by the arithmetic mean.
-Dashboards display average response time and service reports quote it. ISO/IEC 25010
-defines performance efficiency as "the performance relative to the amount of resources
-used under stated conditions" and places response time under its *time behaviour* sub-
-characteristic, where mean response time is a standard measure.
+Dashboards display average response time and service reports quote it. ISO/IEC 25010 defines performance efficiency as the degree to which a product "performs
+its functions within specified time and throughput parameters and is efficient in the use
+of resources" under specified conditions, and places response time under its *time
+behaviour* sub-characteristic. Mean response time is the measure conventionally reported
+against it.
 
 Against this, a substantial practitioner literature argues that the mean is actively
 misleading. Google's *Site Reliability Engineering* states plainly that when latencies are
@@ -127,11 +128,12 @@ Queueing. Little's Law [5] relates the mean number of items in a system, the arr
 rate and the mean time in system as L = λW. It is used here to distinguish genuine server
 saturation from a load-generator artefact (§4.4, §5.3).
 
-Standards context. ISO/IEC 25010 [6] defines performance efficiency as "the
-performance relative to the amount of resources used under stated conditions", with
-time behaviour covering response and processing times and throughput. If mean response
-time is the standard measure, the question this paper asks is what that measure fails to
-express.
+Standards context. ISO/IEC 25010 [6] defines performance efficiency as the degree to which a product
+"performs its functions within specified time and throughput parameters and is efficient
+in the use of resources" under specified conditions. Its *time behaviour* sub-
+characteristic covers the response time and throughput rates of a system performing its
+functions. Where mean response time is the measure reported against that sub-
+characteristic, the question this paper asks is what the measure fails to express.
 
 Gap. The practitioner literature argues for percentiles largely from first principles and from
 observational data on production systems, where the cause of any degradation is not
@@ -693,9 +695,9 @@ no. 2, pp. 74-80, Feb. 2013. doi: 10.1145/2408776.2408794.
 How Google Runs Production Systems*, ch. 4, "Service Level Objectives." O'Reilly, 2016.
 [Online]. Available: https://sre.google/sre-book/service-level-objectives/
 
-[3] G. Tene, "How NOT to measure latency," discussed in T. Treat, "Everything you know
-about latency is wrong." [Online]. Available:
-https://bravenewgeek.com/everything-you-know-about-latency-is-wrong/
+[3] G. Tene, "How NOT to measure latency," conference presentation. Cited here via the
+secondary account in T. Treat, "Everything you know about latency is wrong." [Online].
+Available: https://bravenewgeek.com/everything-you-know-about-latency-is-wrong/
 
 [4] Grafana Labs, "Open and closed models," *k6 documentation*. [Online]. Available:
 https://grafana.com/docs/k6/latest/using-k6/scenarios/concepts/open-vs-closed/
