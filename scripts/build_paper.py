@@ -70,11 +70,14 @@ def derive(f):
                 f"At an offered rate of 1100/s, closely matching the {f.get('arma_api_content_v8_rps','~1170')} "
                 f"req/s achieved by the closed-model runs, the open model reports a p99 of "
                 f"{open_p99} ms against {closed_p99} ms for the closed model, a factor of "
-                f"{ratio:.2f}. The closed-model percentiles used throughout this paper are "
-                f"therefore optimistic by roughly that factor: coordinated omission is "
-                f"present and measurable. The direction matters for interpretation: every "
-                f"tail divergence reported above is a conservative estimate, and the "
-                f"true divergences are larger, not smaller."
+                f"{ratio:.2f}. Coordinated omission is therefore present and measurable "
+                f"at this load level. The factor should not be read as a correction "
+                f"applicable throughout the paper: it rests on two retained runs that "
+                f"disagree substantially with each other, at one offered rate, on one "
+                f"route, and it establishes the direction of the bias and its rough order "
+                f"rather than a coefficient other results can be divided by. The direction "
+                f"does matter for interpretation: it implies the tail divergences reported "
+                f"above are conservative rather than inflated."
             )
         elif ratio <= 0.87:
             d["arme_narrative"] = (

@@ -321,6 +321,11 @@ def main():
         par.paragraph_format.first_line_indent = Inches(0.16)
         add_runs(par, " ".join(b))
 
+    if pending:
+        sys.exit(f"ABORT: table caption {pending[1]} ({pending[0][:50]}...) was never "
+                 f"followed by a table. A [[TABLE:]] marker wrapped across two lines will "
+                 f"do this - keep captions on one line.")
+
     out = R("paper", "paper.docx")
     doc.save(out)
     print(f"paper.docx written: {os.path.getsize(out)/1024:.0f} KB  (two-column)")

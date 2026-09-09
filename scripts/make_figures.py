@@ -127,6 +127,44 @@ fig.suptitle("Arm A: absolute latency rises with load while the tail becomes rel
              "less extreme", fontsize=10)
 save(fig, "fig_arma_matrix.png")
 
+
+# --------------------------------------------- Arm C: CV fails, the tail does not (NEW)
+# Reported in §5.10. The coefficient of variation runs the wrong way against slow-path
+# incidence, so it is plotted beside a statistic that does track, to make the contrast
+# the point of the figure rather than an aside in the text.
+ladder = [("uniform_cheap", "0%\n(none)"), ("mix_0p1pct", "0.1%"), ("mix_1pct", "1%"),
+          ("mix_10pct", "10%"), ("uniform_expensive", "100%")]
+x = np.arange(len(ladder))
+cv = [F[f"ladder_{k}_cv"] for k, _ in ladder]
+p999 = [F[f"ladder_{k}_p999"] for k, _ in ladder]
+
+fig, (c1, c2) = plt.subplots(1, 2, figsize=(10, 3.6))
+bars = c1.bar(x, cv, color=[RED] + [GREY] * 3 + [GREEN], width=0.6)
+for b, v in zip(bars, cv):
+    c1.text(b.get_x() + b.get_width() / 2, v, f"{v:.2f}", ha="center", va="bottom", fontsize=8.5)
+c1.set_xticks(x); c1.set_xticklabels([l for _, l in ladder])
+c1.set_xlabel("Fraction of requests on the slow path")
+c1.set_ylabel("Coefficient of variation")
+c1.set_title("CV: highest where there is no slow path")
+c1.set_ylim(0, max(cv) * 1.28)
+c1.annotate("healthiest workload,\nscored most variable",
+            xy=(0, cv[0]), xytext=(1.15, cv[0] * 1.02), fontsize=8, color=RED,
+            arrowprops=dict(arrowstyle="->", color=RED, lw=1))
+
+c2.plot(x, p999, "o-", color=BLUE, lw=2, ms=6)
+for xi, v in zip(x, p999):
+    c2.text(xi, v, f"  {v:.2f}", fontsize=8.5, va="center", ha="left", color=GREY)
+c2.set_xticks(x); c2.set_xticklabels([l for _, l in ladder])
+c2.set_xlabel("Fraction of requests on the slow path")
+c2.set_ylabel("p99.9 (ms)")
+c2.set_title("p99.9: rises with incidence, as expected")
+c2.set_xlim(-0.35, len(ladder) - 0.35)
+
+fig.suptitle("Arm C: the coefficient of variation runs backwards against slow-path "
+             "incidence; a high percentile does not", fontsize=10)
+fig.tight_layout(rect=[0, 0, 1, 0.93])
+save(fig, "fig_armc_cv_failure.png")
+
 print(f"regenerated {len(made)} figures from current facts.json:")
 for p in made:
     print("  ", os.path.relpath(p, ROOT))

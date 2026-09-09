@@ -68,6 +68,13 @@ if os.path.exists(p):
     put("calib_levels", len(rows), p)
     put("calib_max_vus", max(int(r["vus"]) for r in rows), p)
     put("calib_peak_rps", int(max(float(r["rps"]) for r in rows)), p)
+    # Throughput after saturation. The peak (at the highest VU count) is NOT the plateau:
+    # quoting it as "delivers approximately X regardless of client count" overstates the
+    # level actually held from the knee onward.
+    plateau = [float(r["rps"]) for r in rows if int(r["vus"]) >= 8]
+    put("calib_plateau_rps", int(sum(plateau) / len(plateau)), p)
+    put("calib_plateau_lo", int(min(plateau)), p)
+    put("calib_plateau_hi", int(max(plateau)), p)
     put("calib_cores_plateau", f(st.median([float(r["cores_used"]) for r in rows if int(r["vus"]) >= 8]), 2), p)
     by = {int(r["vus"]): r for r in rows}
     for v in (1, 2, 4, 8, 16, 200):
@@ -208,7 +215,7 @@ if os.path.exists(p):
     for row in jload(p):
         k = "ladder_" + row["name"]
         put(k + "_n", int(row["n"]), p)
-        for stat in ("mean", "p50", "p90", "p95", "p99", "p999", "p9999", "max", "cv"):
+        for stat in ("mean", "p50", "p90", "p95", "p99", "p999", "p9999", "max", "cv", "std"):
             put(f"{k}_{stat}", f(row[stat], 3), p)
         put(k + "_frac_over_3ms", f(row["frac_over_3ms"], 3), p)
 

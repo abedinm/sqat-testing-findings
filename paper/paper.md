@@ -8,8 +8,8 @@
 Mean response time is the default summary statistic in web performance reporting. ISO/IEC
 25010 names it under the *time behaviour* sub-characteristic of performance efficiency. Practitioner literature widely asserts that averages conceal
 tail-latency failures that percentile analysis exposes. This paper tests that assertion
-empirically rather than assuming it, using a single real Node.js web application under six
-controlled load arms and 39.4 million requests generated with k6.
+empirically rather than assuming it, using a single real Node.js web application under eight controlled load arms and
+39.4 million requests generated with k6.
 
 The assertion is found to be conditionally true, and false in the form it is usually
 stated. Where workload cost rises uniformly, whether through deeper request queues or a dataset
@@ -45,19 +45,18 @@ omission, ISO/IEC 25010
 ## 1. Introduction
 
 Performance reporting for web applications is dominated by the arithmetic mean.
-Dashboards display average response time and service reports quote it. ISO/IEC 25010 defines performance efficiency as the degree to which a product "performs
-its functions within specified time and throughput parameters and is efficient in the use
-of resources" under specified conditions, and places response time under its *time behaviour* sub-characteristic. The companion
-measurement standard ISO/IEC 25023 [1] defines mean response time as a quality measure
-against that sub-characteristic.
+Dashboards display average response time and service reports quote it. ISO/IEC 25010 [1] defines performance efficiency as the degree to which a product
+"performs its functions within specified time and throughput parameters and is efficient
+in the use of resources" under specified conditions, and places response time under its
+*time behaviour* sub-characteristic. The companion measurement standard ISO/IEC 25023 [2]
+defines mean response time as a quality measure against that sub-characteristic.
 
 Against this, a substantial practitioner literature argues that the mean is actively
-misleading. Google's *Site Reliability Engineering* states plainly that when latencies are
-averaged, "it's entirely possible for most of the requests to be fast, but for a long tail
-of requests to be much, much slower", and illustrates it with a system where a typical
-request completes in about 50 ms but "5% of requests are 20 times slower". Dean and
-Barroso's account of tail latency in large-scale services makes a related argument at
-scale.
+misleading. Google's *Site Reliability Engineering* [3] states plainly that when latencies
+are averaged, "it's entirely possible for most of the requests to be fast, but for a long tail
+of requests to be much, much slower", and illustrates it with a system where a typical request completes in about 50 ms but "5%
+of requests are 20 times slower". Dean and Barroso [4] make a related argument at the
+scale of large fan-out services.
 
 The claim is intuitively compelling and widely repeated. It is rarely tested on a single
 system where the cause of degradation is known and can be varied deliberately. This paper
@@ -90,17 +89,23 @@ under which it holds are narrower and more interesting than usually stated.
 2. Empirical evidence that tail divergence peaks near the onset of saturation and
    *decreases* under heavy load. That reverses the intuition that percentiles matter
    most when a system is most stressed.
-3. A demonstration that under load shedding, both mean and percentile latency improve
-   dramatically while the service fails, establishing that no latency statistic is
-   interpretable without an error-rate denominator.
+3. A quantification of a hazard already stated qualitatively in the monitoring literature
+[3]: under load shedding, mean and p99 latency improve by factors of
+52.8 and 21.3 while 99.998%
+of requests fail. The principle that latency must be read beside an error rate is not new;
+the magnitude of the distortion on a real application, and the fact that percentile
+analysis fails here alongside the mean rather than correcting it, is what this arm
+contributes.
 4. A quantified coordinated-omission control for the study's own instrument, and a
-   measurement of percentile sampling bias arising from time-varying request rates.
+measurement of how far a percentile moves when the sampling unit changes from the request
+to the time interval. Neither mechanism is new; both are measured here on the study's own
+data rather than assumed away.
 
 ---
 
 ## 2. Background and Related Work
 
-Tail latency. Dean and Barroso [2] describe how, in large-scale services composed of
+Tail latency. Dean and Barroso [4] describe how, in large-scale services composed of
 many components, rare slow responses come to dominate user-visible latency, and argue that
 techniques tolerating latency variability are essential to responsive systems. Their
 concern is variability, not mean slowness, a distinction this paper takes as its central
@@ -113,29 +118,29 @@ percentile (also known as the median) emphasizes the typical case." It further o
 that "user studies have shown that people typically prefer a slightly slower system to one
 with high variance in response time", again locating the problem in variance.
 
-Coordinated omission. Tene's critique [4] identifies a systematic flaw in load
+Coordinated omission. Tene's critique [5] identifies a systematic flaw in load
 measurement: when a generator's request issuance is coupled to the system's responses, the
 requests that *would* have been issued during a slow period are never issued, so slow
 periods are under-sampled and percentiles are biased optimistically. Grafana's k6
-documentation [5] states the same in tool-specific terms: in the closed model "VU
+documentation [6] states the same in tool-specific terms: in the closed model "VU
 iterations start only when the last iteration finishes", and when the target system
 "starts to respond more slowly, a closed model load test will wait, resulting in increased
 iteration durations and a tapering off of the arrival rate of new VU iterations", a
-problem "known as *coordinated omission*". Schroeder, Wierman and Harchol-Balter [6] establish the same point experimentally,
+problem "known as *coordinated omission*". Schroeder, Wierman and Harchol-Balter [7] establish the same point experimentally,
 showing that open and closed workload models produce substantially different behaviour in
 real systems and that the choice between them changes the conclusions a study reaches.
 This paper measures the magnitude of the bias in its own data rather than assuming it away
 (§5.8).
 
-Queueing. Little's Law [7] relates the mean number of items in a system, the arrival
+Queueing. Little's Law [8] relates the mean number of items in a system, the arrival
 rate and the mean time in system as L = λW. It is used here to distinguish genuine server
 saturation from a load-generator artefact (§4.4, §5.3).
 
-Standards context. ISO/IEC 25010 [8] defines performance efficiency as the degree to which a product
+Standards context. ISO/IEC 25010 [1] defines performance efficiency as the degree to which a product
 "performs its functions within specified time and throughput parameters and is efficient
 in the use of resources" under specified conditions. Its *time behaviour* sub-
 characteristic covers the response time and throughput rates of a system performing its
-functions. ISO/IEC 25023 [1] defines mean response time as a measure against that sub-
+functions. ISO/IEC 25023 [2] defines mean response time as a measure against that sub-
 characteristic. The question this paper asks is what that measure fails to express.
 
 Gap. The practitioner literature argues for percentiles largely from first principles and from
@@ -218,10 +223,11 @@ derived from run outputs; none is transcribed by hand.
 Percentiles are reported at p50, p95, p99 and p99.9. Two additional treatments are
 applied:
 
-Time-quantized percentiles. Percentiles computed over raw request samples are biased. Fast periods emit more requests
-per unit time, so healthy behaviour is over-represented. Each run therefore also reports a
-percentile computed over per-second means, and the gap between the two is reported as the
-sampling bias (§5.9).
+Sampling unit. Percentiles here are computed over per-request samples. Each run also
+reports a percentile recomputed over per-second mean response times, which is the form
+produced by a monitoring system that retains one summary per interval rather than every
+request. The two are compared in §5.9. The difference is an aggregation effect and this
+design does not decompose it into contributing mechanisms.
 
 Effect size alongside significance. Where distributions are compared, the
 Mann-Whitney U test is used, as response-time distributions are not normal. Effect size (rank-biserial r) is reported alongside p, because at the sample sizes
@@ -241,7 +247,7 @@ the queue is forming inside the application. The measurement is reported in §5.
 
 ### 4.5 Experimental arms
 
-[[TABLE:The six experimental arms and the variable each isolates.]]
+[[TABLE:The eight experimental arms and the variable each isolates.]]
 | Arm | Independent variable | Purpose |
 |---|---|---|
 | Calibration | concurrency, 1 to 200 VUs | locate saturation knee |
@@ -268,9 +274,10 @@ Fig. 2 summarises the design. Load runs used k6's `constant-vus` executor; stres
 20 s each.
 
 Throughput saturates at 8 virtual users: marginal gain per doubling falls from +35%
-(1→2) through +21% (2→4) and +10% (4→8) to −2% at 16 VUs. Beyond that point the server
-delivers approximately 2,116 requests per second regardless of client count,
-and latency rises in proportion to concurrency: p50 is 7.85 ms at 16 VUs and
+(1→2) through +21% (2→4) and +10% (4→8) to −2% at 16 VUs. Beyond that point throughput is flat in client count, holding between 1,917
+and 2,116 requests per second from 8 virtual users to 200, averaging
+2,014 and peaking at 2,116, while latency rises in proportion
+to concurrency: p50 is 7.85 ms at 16 VUs and
 94.35 ms at 200. That is Little's Law with throughput pinned.
 
 The Node process's CPU draw plateaus at about 1.4 cores from 4 VUs
@@ -294,10 +301,11 @@ normally sit, and least when a system is obviously overloaded.
 
 ### 5.2 Arm A: baseline load matrix
 
-45 runs across three concurrency levels and three routes, zero failures;
+45 runs across three concurrency levels and three routes,
+0 failures;
 9 warm-up runs discarded, n = 4 per cell.
 
-[[TABLE:Arm A load matrix. 45 runs, zero failures, n = 4 per cell after warm-up discard.]]
+[[TABLE:Arm A load matrix. 45 runs, 0 failures, n = 4 per cell after warm-up discard.]]
 | Route | VUs | req/s | mean (ms) | p50 | p95 | p99 | p99/mean |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | /services.html | 2 | 1,493 | 1.313 | 1.233 | 1.749 | 2.254 | 1.72 |
@@ -331,15 +339,27 @@ test was repeated with a 20,000-VU ceiling.
 The corrected run reached the criterion, aborting at an error rate of
 5.856% with 1,504 requests per second sustained.
 
-[[TABLE:Stress test at the breaking point, with maxVUs raised to 20,000.]]
-| Measure | Value |
-|---|---|
-| p50 / p99 | 15 / 2,478 ms |
-| HTTP 5xx responses | 0 |
-| Transport-level errors | 8,296 |
-| Socket handles | 301 → 8,679 |
-| Process memory | 69 MB → 779 MB |
-| Server process | survived; memory and handles returned to baseline |
+[[TABLE:Stress arm, both stages. Stage 4 capped in-flight requests at 4,000 VUs; stage 4b raised the cap to 20,000.]]
+| Measure | Stage 4 (4,000 VU cap) | Stage 4b (20,000 VU cap) |
+|---|---:|---:|
+| Requests completed | 359,743 | 141,665 |
+| Throughput achieved | 1,698 req/s | 1,504 req/s |
+| Iterations the generator could not place | 547,714 | 8,001 |
+| Failed requests | 0.593% | 5.856% |
+| p50 / p99 | 2,066.5 / 2,227.5 ms | 15 / 2,478 ms |
+| HTTP 5xx responses | 0 | 0 |
+| Transport-level errors | 2,133 | 8,296 |
+| Socket handles | 258 → 7,811 | 301 → 8,679 |
+| Process memory | 67 → 1,045 MB | 69 → 779 MB |
+| Server process | survived | survived; memory and handles returned to baseline |
+
+Both stages are tabulated because the contrast is the point. Stage 4 reports a low error
+rate and a flat p50 that could be read as a healthy system near its limit; it was neither.
+The generator dropped 547,714 iterations it could not place, an order of
+magnitude more than stage 4b, which is the signature of a client-side ceiling rather than a
+server-side one. A stress result should not be interpreted without the dropped-iteration
+count beside it, for the same reason a latency figure should not be read without an error
+rate.
 
 The failure mode is connection refusal through socket exhaustion, not application error.
 The application never returned an error status. It stopped *accepting* connections. Memory and handle counts recovered fully once load was removed, indicating
@@ -362,7 +382,7 @@ One continuous run of 3,599 seconds at the knee, 4,221,421 requests,
 | early-window p95 | 8.921 ms |
 | late-window p95 | 8.871 ms |
 | degradation ratio (late p95 / early p95) | 0.9944 (-0.56%) |
-| Mann-Whitney p | 0 |
+| Mann-Whitney p | < 1e-308 (underflowed to 0 at double precision) |
 | effect size r | 0.0417 |
 
 There is no sustained degradation (Fig. 5). H1 is refuted. Process memory reached a steady
@@ -371,11 +391,12 @@ request cost is real, but it does not accumulate. The mechanism is expensive and
 stateless: each request allocates and releases, and garbage collection keeps pace
 indefinitely.
 
-The run also demonstrates a methodological trap. The Mann-Whitney test returns p =
-0, conventionally read as highly significant, on an effect size of r =
-0.0417, which is negligible. At 4.2 million samples any
-difference at all attains significance. Reporting the p-value alone would have asserted a
-degradation that is not there.
+The run also demonstrates a methodological trap. The Mann-Whitney test returns a p-value
+that underflows double precision and is reported by SciPy as 0; the true value
+is below 1e-308. It sits alongside an effect size of r = 0.0417, which is
+negligible. At 4.2 million samples any difference at all attains
+significance, and the p-value stops carrying information long before it stops being
+printed. Reporting it alone would have asserted a degradation that is not there.
 
 [[FIGURE:degradation_curve.png|Soak test. Binned mean and p99 across 3600 s; no trend is present.]]
 
@@ -424,13 +445,16 @@ The mean dilutes faster than the tail. Comparing the 90/10 mix against the unifo
 expensive workload: the mean falls from 6.874 ms to
 1.056 ms, a factor of 6.51, while p99.9 falls only
 from 19.561 ms to 13.303 ms, a factor of
-1.47. Identical expensive work is present in both; the mean reports it
-4.4× more optimistically than the high percentile does. H4 is
+1.47. The same expensive endpoint is exercised in both, though not under identical queueing
+conditions, as the caveat below sets out; the mean reports it 4.4×
+more optimistically than the high percentile does. H4 is
 supported: the mean tracks the majority of requests, the tail tracks the affected
 minority.
 
-A slow path is invisible to a percentile below its own incidence (Fig. 7), which constrains the
-practice this paper recommends. A percentile at rank *p* can
+A slow path is invisible to a percentile below its own incidence (Fig. 7), which constrains the practice this paper recommends. The bound is definitional rather than
+empirical, following from what a quantile is; what the measurements establish is that a
+real application tracks it exactly, with no softening from queueing, scheduling or
+measurement noise. A percentile at rank *p* can
 only reflect a slow path affecting a fraction *q* of requests if *p* > 100(1 − *q*). The
 data follow that boundary exactly:
 
@@ -511,7 +535,7 @@ metrics report, not what the application does.
 ### 5.8 Arm E: coordinated-omission control
 
 All load arms above used a closed-model executor, in which a virtual user issues its next
-request only after the previous one returns. As Tene [4] and the k6 documentation [5]
+request only after the previous one returns. As Tene [5] and the k6 documentation [6]
 describe, this under-samples slow periods and biases percentiles optimistically. The study's argument rests on percentiles, so the size of that bias was measured rather
 than assumed, by repeating `/api/content` with an open-model executor at three offered
 rates.
@@ -523,7 +547,7 @@ rates.
 | 1100/s | 1,099 | 0 | 4.544 | 11.254 | 36.685 |
 | 1400/s | 1,158 | 26,226 | 2,276.513 | 2,664.987 | 2,735.002 |
 
-At an offered rate of 1100/s, closely matching the 1174 req/s achieved by the closed-model runs, the open model reports a p99 of 36.685 ms against 15.097 ms for the closed model, a factor of 2.43. The closed-model percentiles used throughout this paper are therefore optimistic by roughly that factor: coordinated omission is present and measurable. The direction matters for interpretation: every tail divergence reported above is a conservative estimate, and the true divergences are larger, not smaller.
+At an offered rate of 1100/s, closely matching the 1174 req/s achieved by the closed-model runs, the open model reports a p99 of 36.685 ms against 15.097 ms for the closed model, a factor of 2.43. Coordinated omission is therefore present and measurable at this load level. The factor should not be read as a correction applicable throughout the paper: it rests on two retained runs that disagree substantially with each other, at one offered rate, on one route, and it establishes the direction of the bias and its rough order rather than a coefficient other results can be divided by. The direction does matter for interpretation: it implies the tail divergences reported above are conservative rather than inflated.
 
 Fig. 9 shows the effect. Offering only about 20% more than the server's sustainable
 throughput moved the mean from 4.544 ms to
@@ -542,21 +566,80 @@ consistent, but the exact factor should not be quoted precisely.
 
 [[FIGURE:fig_arme_open_vs_closed.png|Arm E. An open-model test exposes a saturation cliff a closed-model test cannot produce.]]
 
-### 5.9 Percentile sampling bias
+### 5.9 Percentiles over requests versus over per-interval means
 
-Percentiles computed over raw request samples over-represent fast periods, because more
-requests complete per unit time when the system is healthy. Comparing raw percentiles with
-percentiles computed over per-second means:
+A monitoring system rarely retains every request. It commonly stores one aggregate per
+interval and computes percentiles over those aggregates. That is a different quantity from
+a percentile over requests, and the two were measured on the same runs by recomputing p99
+over per-second mean response times:
 
-[[TABLE:Percentile sampling bias: raw request samples against time-quantized samples.]]
-| Run | p99 raw | p99 time-quantized | bias |
+[[TABLE:p99 over per-request samples against p99 over per-second means.]]
+| Run | p99 over requests | p99 over per-second means | difference |
 |---|---:|---:|---:|
 | smoke (30 s, 1 VU) | 1.888 ms | 1.041 ms | 0.847 ms |
 | soak (3600 s, 8 VUs) | 17.436 ms | 7.26 ms | 10.176 ms |
 
-The bias is large, over half the reported value in the soak case. A percentile is
-therefore not one well-defined quantity. It depends on whether requests or intervals are
-the sampling unit, and studies reporting percentiles should say which they used.
+The per-interval figure is far the lower of the two, by 10.176 ms in the soak run,
+more than half the per-request value. The direction deserves stating plainly, because it
+contradicts the mechanism this comparison was set up to measure. Unequal sampling should
+make a per-request percentile optimistic: fast periods complete more requests per unit
+time, so healthy stretches contribute more samples, and weighting by time instead of by
+request ought to raise the tail. The observed effect runs the opposite way and is much
+larger. Taking a mean within each interval removes all within-interval variance before the
+percentile is computed, and where the tail lives inside individual seconds rather than
+across them, that removal outweighs the sampling effect entirely. The two mechanisms are
+not separated by this design, so the difference should be read as the combined effect of
+interval aggregation rather than as a measurement of sampling bias. The practical
+consequence holds whichever mechanism dominates. A percentile is not one well-defined
+quantity: computed over requests and computed over per-interval averages it differs here
+by more than a factor of two, and the second is what many monitoring stacks actually
+store. Any reported percentile should carry its sampling unit with it.
+
+### 5.10 Coefficient of variation fails when the mean approaches the timer floor
+
+The natural variance-sensitive summary is the coefficient of variation, the standard
+deviation divided by the mean. Arm C measured it for all five workloads, which allows the
+statistic to be tested against workloads whose variance structure is known by construction
+rather than inferred.
+
+[[TABLE:Coefficient of variation against slow-path incidence. The workload containing no slow path scores highest.]]
+| Workload | mean (ms) | std (ms) | p99 (ms) | CV |
+|---|---:|---:|---:|---:|
+| 100% cheap | 0.337 | 0.491 | 1.506 | 1.458 |
+| 99.9 / 0.1 mix | 0.378 | 0.500 | 1.506 | 1.320 |
+| 99 / 1 mix | 0.446 | 0.559 | 2.023 | 1.254 |
+| 90 / 10 mix | 1.056 | 1.312 | 5.341 | 1.243 |
+| 100% expensive | 6.874 | 2.144 | 17.177 | 0.312 |
+
+CV falls monotonically as the slow path becomes more common: 1.458
+where there is no slow path at all, then 1.320,
+1.254 and 1.243 as incidence rises, down to
+0.312 when every request is expensive. That ordering, shown in Fig. 10, is the reverse of the one the statistic is supposed to supply. An operator watching CV would rank
+the workload containing no slow path as the most variable of the five, and would rank the
+workload in which a tenth of requests are an order of magnitude slower as calmer than the
+healthy one.
+
+The mechanism is arithmetic rather than mysterious. CV is the ratio of standard deviation
+to mean, and for the cheap workload the median request completes below the timer's
+resolution, giving p50 = 0.000 ms against a mean of
+0.337 ms. Scheduler and timer noise of a few hundred microseconds
+is then a large fraction of that mean, so the ratio is large even though the distribution
+contains no slow component. As the expensive path grows, the mean grows faster than the
+standard deviation and the ratio falls.
+
+This constrains a remedy the study would otherwise have recommended, and it fails in the
+same way as the statistics examined above: principled in derivation, misleading in use.
+Relative dispersion is unsafe wherever the mean sits near the measurement floor, which for
+a fast endpoint timed in milliseconds is the ordinary case rather than an edge one. Two
+limits apply. These values come from the single retained per-request series per workload
+described in §5.6, so the ordering is not replicated across runs; and the mechanism
+proposed for it, measurement noise dominating a small mean, is an interpretation of the
+arithmetic rather than something this design isolates. The direction of the effect is
+large and consistent across four incidence levels, but the exact values should not be
+quoted as stable.
+
+[[FIGURE:fig_armc_cv_failure.png|Arm C. The coefficient of variation is highest for the workload containing no slow path and falls as incidence rises; p99.9 tracks incidence as intended.]]
+
 
 ---
 
@@ -598,16 +681,23 @@ In the rate-limiting arm (§5.7), mean and p99 both improved by more than an ord
 its breaking point with zero HTTP error responses, failing instead at the connection
 layer.
 
-Latency statistics describe only the requests that were served. Any reporting regime that
-does not pair them with an error rate, and with a count of requests never served at all,
-can be made to look arbitrarily good by a system that fails faster.
+Latency statistics describe only the requests that were served. The principle is
+established: Google's monitoring guidance [3] states that it is important to distinguish
+the latency of successful requests from that of failed ones, and warns that a quickly-
+served error can make latency calculations misleading. What the measurements here add is
+the scale of the effect and its reach. Any reporting regime that does not pair latency
+with an error rate, and with a count of requests never served at all, can be made to look
+arbitrarily good by a system that fails faster, and no choice of percentile protects
+against it.
 
 ### 6.4 Implications for practice
 
 1. Report mean and a high percentile and an error rate. Any one alone is defeasible.
-2. Prefer variance-sensitive indicators, p99/p50 or a coefficient of variation, over
-   absolute percentiles when watching for emerging problems, since absolute divergence
-   shrinks under heavy load.
+2. Prefer a ratio of percentiles, p99/p50, over absolute percentiles when watching for
+   emerging problems, since absolute divergence shrinks under heavy load. Do not
+   substitute the coefficient of variation for it: §5.10 shows CV ranking the healthiest
+   of five workloads as the most variable, because relative dispersion is dominated by
+   measurement noise wherever the mean sits near the timer floor.
 3. State the sampling unit for percentiles (§5.9) and the load model used (§5.8); both
    materially change the reported value.
 
@@ -696,35 +786,35 @@ data reported here was generated by the experiments described in Section 4.
 
 ## References
 
-[1] ISO/IEC 25023:2016, *Systems and software engineering, Systems and software Quality
+[1] ISO/IEC 25010:2023, *Systems and software engineering, Systems and software Quality
+Requirements and Evaluation (SQuaRE), Product quality model*. International Organization
+for Standardization, 2023.
+
+[2] ISO/IEC 25023:2016, *Systems and software engineering, Systems and software Quality
 Requirements and Evaluation (SQuaRE), Measurement of system and software product quality*.
 International Organization for Standardization, 2016.
-
-[2] J. Dean and L. A. Barroso, "The tail at scale," *Communications of the ACM*, vol. 56,
-no. 2, pp. 74-80, Feb. 2013. doi: 10.1145/2408776.2408794.
 
 [3] B. Beyer, C. Jones, J. Petoff, and N. R. Murphy, Eds., *Site Reliability Engineering:
 How Google Runs Production Systems*, ch. 4, "Service Level Objectives." O'Reilly, 2016.
 [Online]. Available: https://sre.google/sre-book/service-level-objectives/
 
-[4] G. Tene, "How NOT to measure latency," presented at QCon San Francisco, San Francisco,
+[4] J. Dean and L. A. Barroso, "The tail at scale," *Communications of the ACM*, vol. 56,
+no. 2, pp. 74-80, Feb. 2013. doi: 10.1145/2408776.2408794.
+
+[5] G. Tene, "How NOT to measure latency," presented at QCon San Francisco, San Francisco,
 CA, Nov. 2015. [Online]. Available: https://www.infoq.com/presentations/latency-response-
 time/
 
-[5] Grafana Labs, "Open and closed models," *k6 documentation*. [Online]. Available:
+[6] Grafana Labs, "Open and closed models," *k6 documentation*. [Online]. Available:
 https://grafana.com/docs/k6/latest/using-k6/scenarios/concepts/open-vs-closed/
 
-[6] B. Schroeder, A. Wierman, and M. Harchol-Balter, "Open versus closed: a cautionary
+[7] B. Schroeder, A. Wierman, and M. Harchol-Balter, "Open versus closed: a cautionary
 tale," in *Proc. 3rd USENIX Symp. Networked Systems Design and Implementation (NSDI '06)*,
 San Jose, CA, May 2006. [Online]. Available:
 https://www.usenix.org/legacy/event/nsdi06/tech/full_papers/schroeder/schroeder.pdf
 
-[7] J. D. C. Little, "A proof for the queuing formula: L = λW," *Operations Research*,
+[8] J. D. C. Little, "A proof for the queuing formula: L = λW," *Operations Research*,
 vol. 9, no. 3, pp. 383-387, 1961. doi: 10.1287/opre.9.3.383.
-
-[8] ISO/IEC 25010:2023, *Systems and software engineering, Systems and software Quality
-Requirements and Evaluation (SQuaRE), Product quality model*. International Organization
-for Standardization, 2023.
 
 [9] A. Georges, D. Buytaert, and L. Eeckhout, "Statistically rigorous Java performance
 evaluation," in *Proc. 22nd ACM SIGPLAN Conf. Object-Oriented Programming Systems,
