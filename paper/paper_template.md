@@ -274,10 +274,10 @@ Fig. 2 summarises the design. Load runs used k6's `constant-vus` executor; stres
 20 s each.
 
 Throughput saturates at 8 virtual users: marginal gain per doubling falls from +35%
-(1→2) through +21% (2→4) and +10% (4→8) to −2% at 16 VUs. Beyond that point throughput is flat in client count, holding between {{calib_plateau_lo}}
-and {{calib_plateau_hi}} requests per second from 8 virtual users to 200, averaging
-{{calib_plateau_rps}} and peaking at {{calib_peak_rps}}, while latency rises in proportion
-to concurrency: p50 is {{calib_p50_16}} ms at 16 VUs and
+(1→2) through +21% (2→4) and +10% (4→8) to −2% at 16 VUs. Beyond that point throughput is flat in client count. From 8 virtual users to 200 it holds
+between {{calib_plateau_lo}} and {{calib_plateau_hi}} requests per second, averaging
+{{calib_plateau_rps}} and peaking at {{calib_peak_rps}}. Latency, meanwhile, rises in
+proportion to concurrency: p50 is {{calib_p50_16}} ms at 16 VUs and
 {{calib_p50_200}} ms at 200. That is Little's Law with throughput pinned.
 
 The Node process's CPU draw plateaus at about {{calib_cores_plateau}} cores from 4 VUs
@@ -630,11 +630,10 @@ standard deviation and the ratio falls.
 This constrains a remedy the study would otherwise have recommended, and it fails in the
 same way as the statistics examined above: principled in derivation, misleading in use.
 Relative dispersion is unsafe wherever the mean sits near the measurement floor, which for
-a fast endpoint timed in milliseconds is the ordinary case rather than an edge one. Two
-limits apply. These values come from the single retained per-request series per workload
-described in §5.6, so the ordering is not replicated across runs; and the mechanism
-proposed for it, measurement noise dominating a small mean, is an interpretation of the
-arithmetic rather than something this design isolates. The direction of the effect is
+a fast endpoint timed in milliseconds is the ordinary case rather than an edge one. Two limits apply. These values come from the single retained per-request series per
+workload described in §5.6, so the ordering is not replicated across runs. And the
+mechanism proposed for it, measurement noise dominating a small mean, is an interpretation
+of the arithmetic rather than something this design isolates. The direction of the effect is
 large and consistent across four incidence levels, but the exact values should not be
 quoted as stable.
 
@@ -749,14 +748,13 @@ percentile analysis reveals. Under controlled variation of the degradation mecha
 claim held in only one of the three conditions tested.
 
 Where load or workload cost rose uniformly, the mean tracked degradation faithfully and
-the tail became less informative, not more: p99-to-mean fell from
-{{scaled_x1_api_content_ratio}} to {{scaled_x1000_api_content_ratio}} as latency rose by
-three orders of magnitude, and an hour-long soak of {{soak_requests_m}} million requests
-showed a degradation ratio of {{soak_degradation}}. Where the same total work was
-redistributed so that a minority of requests carried it, the mean collapsed toward the
-healthy majority faster than the tail did: diluting the slow path from 100% to 10% of
-requests cut the mean by {{armc_mean_dilution_10}}x but the 99.9th percentile by only
-{{armc_p999_dilution_10}}x. The remedy is narrower than usually stated, however: a slow
+the tail became less informative, not more. p99-to-mean fell from
+{{scaled_x1_api_content_ratio}} to {{scaled_x1000_api_content_ratio}} while latency rose
+by three orders of magnitude. An hour-long soak of {{soak_requests_m}} million requests
+showed a degradation ratio of {{soak_degradation}}. Where the same total work was redistributed so that a minority of requests carried it, the
+mean collapsed toward the healthy majority faster than the tail did. Diluting the slow
+path from 100% to 10% of requests cut the mean by {{armc_mean_dilution_10}}x and the
+99.9th percentile by only {{armc_p999_dilution_10}}x. The remedy is narrower than usually stated, however: a slow
 path below roughly 1% incidence is invisible even to p99.
 
 The sharpest result concerns neither statistic. Under load shedding, mean and p99 improved
