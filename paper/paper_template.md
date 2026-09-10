@@ -800,8 +800,8 @@ How Google Runs Production Systems*, ch. 4, "Service Level Objectives." O'Reilly
 no. 2, pp. 74-80, Feb. 2013. doi: 10.1145/2408776.2408794.
 
 [5] G. Tene, "How NOT to measure latency," presented at QCon San Francisco, San Francisco,
-CA, Nov. 2015. [Online]. Available: https://www.infoq.com/presentations/latency-response-
-time/
+CA, Nov. 2015. [Online].
+Available: https://www.infoq.com/presentations/latency-response-time/
 
 [6] Grafana Labs, "Open and closed models," *k6 documentation*. [Online]. Available:
 https://grafana.com/docs/k6/latest/using-k6/scenarios/concepts/open-vs-closed/
